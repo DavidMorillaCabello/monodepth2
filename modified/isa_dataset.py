@@ -26,7 +26,7 @@ class ISADataset(MonoDataset):
 
         # CAMERA SELECTION. Will get the image number to generate the depth map???
         self.side_map = {"rgb": 0, "the": 1,
-                         "image00": 0, "image01": 1, "0": 0, "1": 1}
+                         "image_00": 0, "image_01": 1, "0": 0, "1": 1}
 
     def check_depth(self):
         '''Returns if the filename for depth exists in the path of the scene.
