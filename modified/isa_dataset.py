@@ -40,7 +40,7 @@ class ISADataset(MonoDataset):
             scene_name,
             "velodyne_points/data/{:010d}.bin".format(int(frame_index))
         )
-
+        return False
         return os.path.isfile(velo_filename)
 
     def get_color(self, folder, frame_index, side, do_flip):
@@ -51,6 +51,7 @@ class ISADataset(MonoDataset):
         if do_flip:
             color = color.transpose(pil.FLIP_LEFT_RIGHT)
 
+        return color
 
 class ISARawDataset(ISADataset):
     '''ISA dataset which loads the original velodyne depth maps for ground truth
