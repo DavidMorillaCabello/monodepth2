@@ -14,7 +14,7 @@ class ISADataset(MonoDataset):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ISADataset).__init__(*args, **kwargs)
+        super(ISADataset, self).__init__(*args, **kwargs)
 
         self.K = np.array([[0.6951924739,  0,              0.365566426,    0],
                            [0,             0.7624195951,   0.3053229782,   0],
