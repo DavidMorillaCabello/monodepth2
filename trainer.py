@@ -136,9 +136,10 @@ class Trainer:
 
         translations = {}
 
-        # Load the translations for train and validation
-        for line in translation_path:
-            translations[line.split()[0]] = line.split()[1]
+        with open(translation_path,'r') as translation_file:
+            for line in translation_file:
+                translations[int(line.split()[0])] = line.split()[1]
+
         
         # Check extension for frames
         img_ext = '.png' if self.opt.png else '.jpg'
