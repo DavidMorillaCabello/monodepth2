@@ -36,6 +36,7 @@ class Trainer:
         assert self.opt.height % 32 == 0, "'height' must be a multiple of 32"
         assert self.opt.width % 32 == 0, "'width' must be a multiple of 32"
 
+        # Config
         self.models = {}
         self.parameters_to_train = []
 
@@ -52,17 +53,22 @@ class Trainer:
         if self.opt.use_stereo:
             self.opt.frame_ids.append("s")
 
+        # Encoder load
         self.models["encoder"] = networks.ResnetEncoder(
             self.opt.num_layers, self.opt.weights_init == "pretrained")
         self.models["encoder"].to(self.device)
         self.parameters_to_train += list(self.models["encoder"].parameters())
 
+        # Decoder load
         self.models["depth"] = networks.DepthDecoder(
             self.models["encoder"].num_ch_enc, self.opt.scales)
         self.models["depth"].to(self.device)
         self.parameters_to_train += list(self.models["depth"].parameters())
 
+        # If not use stereo.
         if self.use_pose_net:
+
+            # Load independent encoder if separated resnet.
             if self.opt.pose_model_type == "separate_resnet":
                 self.models["pose_encoder"] = networks.ResnetEncoder(
                     self.opt.num_layers,
@@ -77,10 +83,12 @@ class Trainer:
                     num_input_features=1,
                     num_frames_to_predict_for=2)
 
+            # Share resnet
             elif self.opt.pose_model_type == "shared":
                 self.models["pose"] = networks.PoseDecoder(
                     self.models["encoder"].num_ch_enc, self.num_pose_frames)
 
+            # Use poseCNN
             elif self.opt.pose_model_type == "posecnn":
                 self.models["pose"] = networks.PoseCNN(
                     self.num_input_frames if self.opt.pose_model_input == "all" else 2)
@@ -88,6 +96,7 @@ class Trainer:
             self.models["pose"].to(self.device)
             self.parameters_to_train += list(self.models["pose"].parameters())
 
+        # Uses Zhou explainability mask
         if self.opt.predictive_mask:
             assert self.opt.disable_automasking, \
                 "When using predictive_mask, please disable automasking with --disable_automasking"
@@ -111,33 +120,54 @@ class Trainer:
         print("Models and tensorboard events files are saved to:\n  ", self.opt.log_dir)
         print("Training is using:\n  ", self.device)
 
-        # data
+        # Dataset load
         datasets_dict = {"kitti": datasets.KITTIRAWDataset,
                          "kitti_odom": datasets.KITTIOdomDataset,
                          "isa": modified.ISARawDataset}
         self.dataset = datasets_dict[self.opt.dataset]
 
+        # Load the pre-path for train and validation
         fpath = os.path.join(os.path.dirname(__file__), "splits", self.opt.split, "{}_files.txt")
+        translation_path = os.path.join(os.path.dirname(__file__), "translations", self.opt.split, "translation_file_image_rgb.txt")
 
+        # Load the files for train and validation
         train_filenames = readlines(fpath.format("train"))
         val_filenames = readlines(fpath.format("val"))
+
+        translations = {}
+
+        # Load the translations for train and validation
+        for line in translation_path:
+            translations[line.split()[0]] = line.split()[1]
+        
+        # Check extension for frames
         img_ext = '.png' if self.opt.png else '.jpg'
 
+        # Get the number of train items.
         num_train_samples = len(train_filenames)
         self.num_total_steps = num_train_samples // self.opt.batch_size * self.opt.num_epochs
 
+        # Load datasets and dataloaders
+
+        # Train dataset
         train_dataset = self.dataset(
-            self.opt.data_path, train_filenames, self.opt.height, self.opt.width,
+            self.opt.data_path, train_filenames, translations, self.opt.height, self.opt.width,
             self.opt.frame_ids, 4, is_train=True, img_ext=img_ext)
+        # Train dataloader
         self.train_loader = DataLoader(
             train_dataset, self.opt.batch_size, True,
             num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+
+        # Validation dataset
         val_dataset = self.dataset(
-            self.opt.data_path, val_filenames, self.opt.height, self.opt.width,
+            self.opt.data_path, val_filenames, translations, self.opt.height, self.opt.width,
             self.opt.frame_ids, 4, is_train=False, img_ext=img_ext)
+        # Validation dataloader
         self.val_loader = DataLoader(
             val_dataset, self.opt.batch_size, True,
             num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+
+        # Iterator from val_loader
         self.val_iter = iter(self.val_loader)
 
         self.writers = {}

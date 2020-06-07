@@ -25,7 +25,7 @@ class ISADataset(MonoDataset):
         self.full_res_shape = (704, 576)
 
         # CAMERA SELECTION. Will get the image number to generate the depth map???
-        self.side_map = {"rgb": 0, "the": 1,
+        self.side_map = {"rgb": "rgb", "the": "the",
                          "image_00": 0, "image_01": 1, "0": 0, "1": 1}
 
     def check_depth(self):
@@ -61,9 +61,14 @@ class ISARawDataset(ISADataset):
         super(ISARawDataset, self).__init__(*args, **kwargs)
 
     def get_image_path(self, folder, frame_index, side):
-        f_str = "{:010d}{}".format(frame_index, self.img_ext)
+
+        timestamp = self.index_to_timestamp[frame_index]
+
+        device = "image_{}".format(self.side_map[side])
+
+        f_str = "{}-{}{}".format(device, timestamp, self.img_ext)
         image_path = os.path.join(
-            self.data_path, folder, "image_0{}/data".format(self.side_map[side]), f_str)
+            self.data_path, folder, device, f_str)
 
         return image_path
 
@@ -85,7 +90,7 @@ class ISARawDataset(ISADataset):
 
         return depth_gt
 
-
+'''
 class ISADepthDataset(ISADataset):
     """ISA dataset which uses the updated ground truth depth maps
     """
@@ -118,3 +123,4 @@ class ISADepthDataset(ISADataset):
             depth_gt = np.fliplr(depth_gt)
 
         return depth_gt
+'''

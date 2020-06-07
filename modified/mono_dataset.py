@@ -41,6 +41,7 @@ class MonoDataset(data.Dataset):
     def __init__(self,
                  data_path,
                  filenames,
+                 index_to_timestamp,
                  height,
                  width,
                  frame_idxs,
@@ -51,6 +52,7 @@ class MonoDataset(data.Dataset):
 
         self.data_path = data_path
         self.filenames = filenames
+        self.index_to_timestamp = index_to_timestamp
         self.height = height
         self.width = width
         self.num_scales = num_scales
@@ -153,6 +155,7 @@ class MonoDataset(data.Dataset):
         else:
             side = None
 
+        # Load color
         for i in self.frame_idxs:
             if i == "s":
                 other_side = {"r": "l", "l": "r"}[side]
@@ -184,6 +187,7 @@ class MonoDataset(data.Dataset):
             del inputs[("color", i, -1)]
             del inputs[("color_aug", i, -1)]
 
+        # Load depth
         if self.load_depth:
             depth_gt = self.get_depth(folder, frame_index, side, do_flip)
             inputs["depth_gt"] = np.expand_dims(depth_gt, 0)
