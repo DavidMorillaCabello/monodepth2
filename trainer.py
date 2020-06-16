@@ -241,7 +241,7 @@ class Trainer:
             self.model_optimizer.zero_grad()
             losses["loss"].backward()
             self.model_optimizer.step()
-
+            print(self.model_optimizer.state_dict())
             duration = time.time() - before_op_time
 
             # log less frequently after the first 2000 steps to save time & disk space
