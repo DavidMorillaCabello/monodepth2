@@ -241,7 +241,12 @@ class Trainer:
             self.model_optimizer.zero_grad()
             losses["loss"].backward()
             self.model_optimizer.step()
-            print(self.model_optimizer.state_dict())
+
+            for group in self.model_optimizer.param_groups():
+                print("Start:")
+                print(group['lr'])
+                print("End.")
+
             duration = time.time() - before_op_time
 
             # log less frequently after the first 2000 steps to save time & disk space
