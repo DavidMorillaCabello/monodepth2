@@ -242,7 +242,7 @@ class Trainer:
             losses["loss"].backward()
             self.model_optimizer.step()
 
-            for group in self.model_optimizer.param_groups():
+            for group in self.model_optimizer.param_groups:
                 print("Start:")
                 print(group['lr'])
                 print("End.")
